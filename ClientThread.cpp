@@ -76,6 +76,7 @@ void ClientThread::nlMsgHandler(unsigned char opcode, string sender, string reci
 			break;
 		case ctl::msg_type::contest:
 			logx("nl says we should tell client their name is taken");
+			ws->sendCtl(opcode, length, payload);
 			break;
 		default:
 			logx("msg_type " + to_string(opcode) + " is unhandled");
@@ -204,6 +205,7 @@ void ClientThread::startNetworkLayer(size_t length, char *data) {
 
 		chess = new chessgame(ws, layer);
 	} else {
+		layer->setName(string(data + 1, length - 1));
 		logx("host asked me to start networking but i'm already networking.");
 	}
 }
@@ -254,7 +256,6 @@ void ClientThread::wsMsgHandler(WS::OPCODE op, size_t length, char * data) {
 			if (ctl::isMsgType(type)) {
 				internalMsgHandler(static_cast<ctl::msg_type>(type), length, data);
 			} else if (chs::isMsgType(type)) {
-				logx("was game message");
 				if (chess != NULL) {
 					chess->handleClientMsg(static_cast<chs::msg_type>(type), length, data);
 				}

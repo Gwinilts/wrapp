@@ -246,7 +246,7 @@ void networklayer::_write(nl::msg * msg) {
 	}
 
 	if (!msg->recipient.empty()) {
-		logx("sending to |" + msg->recipient + "|");
+		//logx("sending to |" + msg->recipient + "|");
 	}
 
 	memcpy(buf, nl::sig, 8);
@@ -404,6 +404,7 @@ void networklayer::handleInternal(nl::msg * msg) {
 		}
 		break;
 	case nl::op::CONTEST:
+		if (msg->sender != name) return;
 		if (!nameConfirmed) {
 			logx("my name has been contested!");
 			claimCount = 0;
@@ -431,7 +432,7 @@ void networklayer::handle(nl::msg *msg) {
 			}
 		}
 	} else {
-		logx("dropped a message not meant for me");
+		//logx("dropped a message not meant for me");
 	}
 	delete [] msg->payload;
 	delete msg;
@@ -447,6 +448,8 @@ void networklayer::setName(string name) {
 	if (nameConfirmed) {
 		handle(generate(static_cast<unsigned char>(ctl::msg_type::confirm), name, "", 0, NULL));
 		return;
+	} else {
+		this->name = name;
 	}
 }
 

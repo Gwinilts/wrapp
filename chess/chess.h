@@ -107,12 +107,19 @@ namespace chs {
     	void reset(color side);
 
     	char getPossibleMoves(unsigned char pos, unsigned char* &moves);
+
     	bool isFriendlyOccupied(unsigned char x, unsigned char y);
+    	bool isEnemyOccupied(unsigned char x, unsigned char y);
     	bool isOccupied(unsigned char x, unsigned char y);
+
     	bool isPossible(char x, char y);
+
+    	bool isFriendlyOccupied(unsigned char x, unsigned char y, char _tile[8][8]);
+    	bool isOccupied(unsigned char x, unsigned char y, char _tile[8][8]);
+    	bool isEnemyOccupied(unsigned char x, unsigned char y, char _tile[8][8]);
+
     	bool willCauseCheck(unsigned char pos, unsigned char x, unsigned char y); // checks if moving this peice will cause check
     	bool willEndCheck(unsigned char pos, unsigned char x, unsigned char y);
-    	bool isEnemyOccupied(unsigned char x, unsigned char y);
     	char getPieces(unsigned char* &pieces);
 
     	unsigned char getOrigin();

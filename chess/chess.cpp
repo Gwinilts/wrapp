@@ -70,9 +70,20 @@ namespace chs {
 		return p.side == side;
 	}
 
+	bool board::isFriendlyOccupied(unsigned char x, unsigned char y, char _tile[8][8]) {
+		if (_tile[x][y] == 0) return false;
+		piece_t p = ctop(_tile[x][y]);
+		return p.side == side;
+	}
+
 	bool board::isOccupied(unsigned char x, unsigned char y) {
 		if (x > 7 || y > 7) return false;
 		return tile[x][y] != 0;
+	}
+
+	bool board::isOccupied(unsigned char x, unsigned char y, char _tile[8][8]) {
+		if (x > 7 || y > 7) return false;
+		return _tile[x][y] != 0;
 	}
 
 	bool board::isPossible(char x, char y) {
@@ -167,6 +178,12 @@ namespace chs {
 		return side != p.side;
 	}
 
+	bool board::isEnemyOccupied(unsigned char x, unsigned char y, char _tile[8][8]) {
+		if (_tile[x][y] == 0) return false;
+		piece_t p = ctop(_tile[x][y]);
+		return side != p.side;
+	}
+
 	char board::getPossibleMoves(unsigned char pos, unsigned char* &moves) {
 		unsigned char count = 0, i, x, y;
 		unsigned char buf[128];
@@ -202,32 +219,26 @@ namespace chs {
 			logx("knightly knight");
 			for (char mx = -2; mx < 3; mx ++) {
 				for (char my = -2; my < 3; my ++) {
-					logx("step " + to_string(mx) + ", " + to_string(my));
 					_x = x + mx;
 					_y = y + my;
 					if (_x == 0 && _y == 2) logx(to_string(mx) + ": " + to_string(my) + "; " + to_string(_x) + ", " + to_string(y));
 					if (mx != 0 && my != 0 && (mx != (0 - my)) && (mx != my)) {
 						if (isPossible(_x, _y) && !isFriendlyOccupied(_x, _y)) {
 							buf[count++] = shrink(_x, _y);
-							logx("selected " + to_string(_x) + ", " + to_string(_y));
 						} else {
 							if (isPossible(_x, _y)) {
 								logx(to_string(_x) + ", " + to_string(_y));
-							} else {
-								logx("--  " + to_string(_x) + ", " + to_string(_y));
 							}
 						}
-					} else {
-						logx("no no no " + to_string(_x) + ", " + to_string(_y));
 					}
 				}
 			}
 			break;
 		case piece::king:
-			logx("king");
+			logx("kingly king");
 			for (char mx = -1; mx < 2; mx++) {
 				for (char my = -1; my < 2; my++) {
-					if (my != 0 && mx != 0) {
+					if (!(mx == 0 && my == 0)) {
 						_x = x + mx;
 						_y = y + my;
 						if (isPossible(_x, _y)) {
@@ -298,6 +309,10 @@ namespace chs {
 		bool isCheck = willCauseCheck(pos, x, y);
 		i = 0;
 
+		if (isCheck) {
+			logx("am in check atm");
+		}
+
 		memcpy(buf + 64, buf, 64);
 
 		for (char t = 0; t < count; t++) {
@@ -321,8 +336,12 @@ namespace chs {
 	}
 
 	bool board::willCauseCheck(unsigned char pos, unsigned char x, unsigned char y) {
-		unsigned char _tile[8][8];
+		char _tile[8][8];
 		unsigned char _x, _y, kx, ky;
+
+		short restore;
+		piece_t old;
+
 		piece_t p;
 
 		for (char i = 0; i < 8; i++) {
@@ -348,16 +367,15 @@ namespace chs {
 
 		for (char m = -1; m < 2; m++) {
 			_x = kx + m;
-			_y = kx + m;
+			_y = ky + m;
 
 			if (m == 0) continue;
 
 			while (isPossible(kx, _y)) {
-				if (isFriendlyOccupied(kx, _y)) break;
-				if (isEnemyOccupied(kx, _y)) {
+				if (isFriendlyOccupied(kx, _y, _tile)) break;
+				if (isEnemyOccupied(kx, _y, _tile)) {
 					p = ctop(_tile[kx][_y]);
 					if (p.type == piece::queen || p.type == piece::rook) {
-						logx("would be check because " + to_string(x) + ", " + to_string(y));
 						return true;
 					}
 				}
@@ -365,10 +383,12 @@ namespace chs {
 			}
 
 			while (isPossible(_x, ky)) {
-				if (isFriendlyOccupied(_x, ky)) break;
-				if (isEnemyOccupied(_x, ky)) {
+				if (isFriendlyOccupied(_x, ky, _tile)) break;
+				if (isEnemyOccupied(_x, ky, _tile)) {
 					p = ctop(_tile[_x][ky]);
-					if (p.type == piece::queen || p.type == piece::rook) return true;
+					if (p.type == piece::queen || p.type == piece::rook) {
+						return true;
+					}
 					break;
 				}
 				_x += m;
@@ -383,10 +403,14 @@ namespace chs {
 				_x = kx + mx;
 
 				while (isPossible(_x, _y)) {
-					if (isFriendlyOccupied(_x, _y)) break;
-					if (isEnemyOccupied(_x, _y)) {
+					if (isFriendlyOccupied(_x, _y, _tile)) {
+						break;
+					}
+					if (isEnemyOccupied(_x, _y, _tile)) {
 						p = ctop(_tile[_x][_y]);
-						if (p.type == piece::bishop || p.type == piece::queen) return true;
+						if (p.type == piece::bishop || p.type == piece::queen) {
+							return true;
+						}
 						break;
 					}
 					_x += mx;
@@ -403,9 +427,11 @@ namespace chs {
 				_y = ky + my;
 				if (_y != 0 && _x != 0 && _x != _y && ((((_x + _y) % 2 == -1)) || ((_x + _y) % 2 == 1))) {
 					if (isPossible(_x, _y)) {
-						if (isEnemyOccupied(_x, _y)) {
+						if (isEnemyOccupied(_x, _y, _tile)) {
 							p = ctop(_tile[_x][_y]);
-							if (p.type == piece::knight) return true;
+							if (p.type == piece::knight) {
+								return true;
+							}
 						}
 					}
 				}
@@ -415,16 +441,29 @@ namespace chs {
 		//pawn
 
 		if (isPossible(kx + 1, ky + 1)) {
-			if (isEnemyOccupied(kx + 1, ky + 1)) {
+			if (isEnemyOccupied(kx + 1, ky + 1, _tile)) {
 				p = ctop(_tile[kx + 1][kx + 1]);
-				if (p.type == piece::pawn) return true;
+				if (p.type == piece::pawn) {
+					return true;
+				}
+			}
+		}
+
+		if (isPossible(kx, ky + 1)) {
+			if (isEnemyOccupied(kx, ky + 1, _tile)) {
+				p = ctop(_tile[kx][ky + 1]);
+				if (p.type == piece::pawn) {
+					return true;
+				}
 			}
 		}
 
 		if (isPossible(kx - 1, ky + 1)) {
-			if (isEnemyOccupied(kx - 1, ky + 1)) {
+			if (isEnemyOccupied(kx - 1, ky + 1, _tile)) {
 				p = ctop(_tile[kx - 1][ky + 1]);
-				if (p.type == piece::pawn) return true;
+				if (p.type == piece::pawn) {
+					return true;
+				}
 			}
 		}
 
@@ -598,7 +637,7 @@ void chessgame::handleNetworkMsg(chs::msg_type op, string sender, unsigned short
 				drawBoard();
 				turn++;
 			} else {
-				logx("got select for wrong turn (" + to_string(t) + ", " + to_string(turn));
+				//logx("got select for wrong turn (" + to_string(t) + ", " + to_string(turn));
 			}
 		}
 		break;
