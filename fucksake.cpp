@@ -151,40 +151,6 @@ Java_com_gwinilts_cpptestagain_NativeThread_init(JNIEnv* env, jobject obj, jobje
 int main(int argc, char **argv) {
 	void *fake = NULL;
 
-	std::chrono::milliseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(
-			std::chrono::system_clock::now().time_since_epoch()
-		);
-
-	logx(ms.count());
-
-	char *h1, *h2;
-
-	int t, len = getHash(h1, "put that dicc in my humanussy");
-
-	if (getHash(h2, "put that dicc in my humanuss") != len) logx("there's a fuckin problem");
-
-	t = compareHash(h1, h2, len);
-
-	if (t == 0) {
-		logx("those things are the same");
-	}
-
-	if (t > 0) {
-		logx("the first is bigger than the second");
-	}
-
-	if (t < 0) {
-		logx("the second is bigger than the first");
-	}
-
-	ms = std::chrono::duration_cast< std::chrono::milliseconds >(
-				std::chrono::system_clock::now().time_since_epoch()
-			);
-	logx(ms.count());
-
-
-	return 0;
-
 	const char * cmd = "ip -j -p -f inet address show wlo1 | grep broadcast | grep -o -E '([0-9]{1,3}[.]{0,1})+'";
 	string bcast = exec(cmd);
 

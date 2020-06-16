@@ -92,16 +92,19 @@ namespace chs {
 
 	bool board::move(unsigned char pos) {
 		unsigned char x, y, _x, _y;
+		piece_t p;
 		if (lastSelect == NULL) return false;
 		for (char i = 0; i < sel_size; i++) {
 			if (pos == lastSelect[i]) {
 				unshrink(origin, _x, _y);
+				p = ctop(tile[_x][_y]);
 				unshrink(pos, x, y);
 				tile[x][y] = tile[_x][_y];
 				tile[_x][_y] = 0;
 				delete [] lastSelect;
 				lastSelect = NULL;
 				sel_size = 0;
+				if (p.type == piece::king) king = shrink(_x, _y);
 				return true;
 			}
 		}
@@ -114,6 +117,8 @@ namespace chs {
 		unshrink(pos, x, y);
 		unshrink(dst, _x, _y);
 
+		//piece_t p = ctop(tile[x][y]);
+
 		//x = 7 - x;
 		y = 7 - y;
 		//_x = 7 - _x;
@@ -121,6 +126,10 @@ namespace chs {
 
 		tile[_x][_y] = tile[x][y];
 		tile[x][y] = 0;
+
+		//if (p.type == piece::king) king = shrink(_x, _y);
+
+
 	}
 
 	unsigned char board::getOrigin() {
@@ -196,6 +205,10 @@ namespace chs {
 		if (x > 7 || y > 7) return 0;
 
 		if (!isFriendlyOccupied(x, y)) return 0;
+
+		if (willCauseCheck(pos, x, y)) {
+			logx("note we are in check");
+		}
 
 		p = ctop(tile[x][y]);
 
@@ -357,7 +370,7 @@ namespace chs {
 		p = ctop(_tile[_x][_y]);
 
 		if (p.type == piece::king) {
-			kx = x; kx = y;
+			kx = x; ky = y;
 		}
 
 		_tile[_x][_y] = 0;
@@ -375,9 +388,11 @@ namespace chs {
 				if (isFriendlyOccupied(kx, _y, _tile)) break;
 				if (isEnemyOccupied(kx, _y, _tile)) {
 					p = ctop(_tile[kx][_y]);
-					if (p.type == piece::queen || p.type == piece::rook) {
+					if ((p.type == piece::queen) || (p.type == piece::rook)) {
+						logx("check by rook or queen x axis " + to_string(kx) + ", " + to_string(_y));
 						return true;
 					}
+					break;
 				}
 				_y += m;
 			}
@@ -386,7 +401,8 @@ namespace chs {
 				if (isFriendlyOccupied(_x, ky, _tile)) break;
 				if (isEnemyOccupied(_x, ky, _tile)) {
 					p = ctop(_tile[_x][ky]);
-					if (p.type == piece::queen || p.type == piece::rook) {
+					if ((p.type == piece::queen) || (p.type == piece::rook)) {
+						logx("check by rook or queen y axis " + to_string(kx) + ", " + to_string(_x));
 						return true;
 					}
 					break;
@@ -409,6 +425,7 @@ namespace chs {
 					if (isEnemyOccupied(_x, _y, _tile)) {
 						p = ctop(_tile[_x][_y]);
 						if (p.type == piece::bishop || p.type == piece::queen) {
+							logx("check by queen or bishop " + to_string(x) + ", " + to_string(y));
 							return true;
 						}
 						break;
@@ -430,6 +447,7 @@ namespace chs {
 						if (isEnemyOccupied(_x, _y, _tile)) {
 							p = ctop(_tile[_x][_y]);
 							if (p.type == piece::knight) {
+								logx("check by knight at " + to_string(_x) + ", " + to_string(_y));
 								return true;
 							}
 						}
